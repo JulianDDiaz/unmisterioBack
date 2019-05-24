@@ -1,0 +1,30 @@
+{
+  "name": "back",
+  "version": "1.0.0",
+  "description": "Backend movilidad UNAL - UNMisterio",
+  "main": "Server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "camunda-external-task-client-js": "^1.1.1",
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "express": "4.16.4",
+    "http-errors": "~1.6.3",
+    "jade": "~1.11.0",
+    "morgan": "~1.9.1",
+    "mysql": "2.17.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ronaldsg20/Back.git"
+  },
+  "author": "UNMisterio",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ronaldsg20/Back/issues"
+  },
+  "homepage": "https://github.com/ronaldsg20/Back#readme"
+}

@@ -1,0 +1,8 @@
+{"db":
+    {
+        "host":"misteriodb.ce2cuughwsdj.us-east-1.rds.amazonaws.com",
+        "user" : "Dev",
+        "password" : "MisterioDev2019",
+        "database" : "misteriodb"
+    }
+}
