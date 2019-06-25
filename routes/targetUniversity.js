@@ -1,7 +1,7 @@
 const mysql = require('mysql');
 const connection = mysql.createConnection(require('./keys.json').db);
 
-class Announcement{
+class TargetUniversity{
     constructor(){
         this.idTarget_University = null;
         this.name = null;
@@ -20,20 +20,20 @@ module.exports.get = (req,res) => {
 }
 
 module.exports.post = (req,res)=>{
-    let announcement = new Announcement();
-    for(a in announcement){
-        if(req.body[a]) announcement[a] = req.body[a];
+    let targetUniversity = new TargetUniversity();
+    for(a in targetUniversity){
+        if(req.body[a]) targetUniversity[a] = req.body[a];
     }
-    connection.query(`INSERT INTO Target_University VALUES (${announcement.idTarget_University},'${announcement.name}','${announcement.description}')`);
+    connection.query(`INSERT INTO Target_University VALUES (${targetUniversity.idTarget_University},'${targetUniversity.name}','${targetUniversity.description}')`);
     res.status(201).end();
 };
 
 module.exports.put = (req,res)=>{
-    let announcement = new Announcement();
+    let targetUniversity = new TargetUniversity();
     let set = "";
-    for(a in announcement){
-        if(req.body[a]) announcement[a] = req.body[a];
-        set += `${a}='${announcement[a]}',`;
+    for(a in targetUniversity){
+        if(req.body[a]) targetUniversity[a] = req.body[a];
+        set += `${a}='${targetUniversity[a]}',`;
     }
     connection.query(`UPDATE Target_University SET ${set.substring(0,set.length-1)} WHERE idTarget_University=${req.query.id}`);
     res.status(200).end();
