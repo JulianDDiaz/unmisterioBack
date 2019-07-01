@@ -11,6 +11,13 @@ class Announcement{
         this.vacant = null;
         this.releaseDate = null;
         this.closureDate = null;
+        this.limitDate = null;
+        this.state = null;
+        this.image = null;
+        this.target_un_contact_name = null;
+        this.target_un_contact_position = null;
+        this.target_un_contact_email = null;
+        this.target_un_contact_phone = null;
     }
 }
 
@@ -26,7 +33,7 @@ module.exports.get = (req,res,next) => {
     let from,nRows;
     if(req.query.from) from = req.query.from; else from = 0;
     if(req.query.nRows) nRows = req.query.nRows; else nRows = 10; 
-    connection.query(`select Announcement.idAnnouncement, Announcement.name, Announcement.description, Announcement.vacant, Announcement.releaseDate, Announcement.closureDate, Announcement.idTargetUniversity, Target_University.name as universityName, Target_University.description as universityDescription from Announcement inner join Target_University on Announcement.idTargetUniversity=Target_University.idTarget_University limit ${from}, ${nRows}`
+    connection.query(`select Announcement.idAnnouncement, Announcement.name, Announcement.description, Announcement.vacant, Announcement.releaseDate, Announcement.closureDate, Announcement.idTargetUniversity, Announcement.closureDate, Announcement.limitDate, Announcement.state, Announcement.image, Target_University.name as universityName, Target_University.description as universityDescription from Announcement inner join Target_University on Announcement.idTargetUniversity=Target_University.idTarget_University limit ${from}, ${nRows}`
         ,(error,results,fields)=>{
             if(error) next(error);
             res.status(200).send(results);
