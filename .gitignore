@@ -2,3 +2,5 @@ node_modules
 Test.js
 TestBPMN.js
 CRUD2.js
+Test2.js
+.gitignore

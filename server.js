@@ -3,6 +3,8 @@ const routes = require('./routes');
 const users = require("./routes/users");
 const bodyParser = require('body-parser');
 
+const { check, validationResult } = require('express-validator/check');
+
 const mysql = require('mysql');
 const connection = mysql.createConnection(require('./routes/keys.json').db);
 const roles = require('./util/variables').roles;
@@ -15,14 +17,17 @@ app.use(bodyParser.json());
 app.use((req,res,next)=>{
     if(req.query.role){
         req.role = parseInt(req.query.role);
-        if(req.role){
-            next();
-        } else{
+        if(!req.role){
             res.status(401).send("Error in the query");
         }
-    }else{
-        next();
     }
+    if(req.query.user){
+        req.userId = parseInt(req.query.user);
+        if(!req.userId){
+            res.status(401).send("Error in the query");
+        }
+    }
+    next();
 });
 
 app.get('/targetUniversity',routes.targetUniversity.get);
@@ -38,15 +43,60 @@ app.delete('/announcements/:id',routes.announcements.delete);
 
 app.get('/mobilityProcesses',routes.mobilityProcess.get);
 
-app.get('/users',users.get);
-app.put('/users/:id',(req,res,next)=>{
-    if(req.role===roles.admin){
-        
-        res.status(204).end();
-    }else{
-        res.status(401).end();
+const mobilityProcess = {
+    idAnnouncement : null,
+    un_location : null,
+    un_faculty : null,
+    un_curricular_program : null,
+    papa : null,
+    un_curricular_coordinator_name : null,
+    un_curricular_coordinator_phone : null,
+    un_curricular_coordinator_email : null,
+    target_city : null,
+    target_faculty : null,
+    target_curricular_program : null,
+    modality : null
+}
+sanitize = [
+    check('idAnnouncement').optional().isInt(),
+    check('un_location').optional().isString(),
+    check('un_faculty').optional().isString(),
+    check('un_curricular_program').optional().isString(),
+    check('papa').optional().isDecimal(),
+    check('un_curricular_coordinator_name').optional().isString(),
+    check('un_curricular_coordinator_phone').optional().isString(),
+    check('un_curricular_coordinator_email').optional().isEmail(),
+    check('target_city').optional().isString(),
+    check('target_faculty').optional().isString(),
+    check('target_curricular_program').optional().isString(),
+    check('modality').optional().isString()
+];
+function getCamundaId(){
+    return new String(parseInt(Math.random()*10000));
+}
+app.post('/mobilityProcesses',sanitize,(req,res,next)=>{
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
     }
+    let b = req.body;
+    let currentDate = new Date().toISOString().substring(0,10);
+    for (e in mobilityProcess){
+        if(b[e]){
+            b[e] = `"${b[e]}"`;
+        } else{
+            b[e] = null;
+        }
+    }
+    connection.query(
+        `INSERT INTO Mobility_Process VALUES ("${getCamundaId()}",1,"${currentDate}",${b.idAnnouncement},"${currentDate}",${req.userId},${b.un_location},${b.un_faculty},${b.un_curricular_program},${b.papa},${b.un_curricular_coordinator_name},${b.un_curricular_coordinator_phone},${b.un_curricular_coordinator_email},${b.target_city},${b.target_faculty},${b.target_curricular_program},${b.modality})`
+        ,(error) => {if(error) next(error);}
+    )
+    res.status(201).end();
 });
+
+app.get('/users',users.get);
+app.put('/users/:id',users.put);
 
 app.use((error,req,res,next)=>{
     console.log(error);

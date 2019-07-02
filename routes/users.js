@@ -1,5 +1,6 @@
 const mysql = require('mysql');
 const connection = mysql.createConnection(require('./keys.json').db);
+const roles = require('../util/variables').roles;
 
 module.exports.get = (req,res,next)=>{
     let from,nRows;
@@ -12,6 +13,18 @@ module.exports.get = (req,res,next)=>{
         }); 
 };
 
-module.exports.post = (req,res,next)=>{
-    
+module.exports.put = (req,res,next)=>{
+    if(req.body.role){
+        if(req.role===roles.admin){
+            connection.query(`update User set Role_idRole=${req.body.role} where idUser=${req.params.id}`,
+            (error)=>{
+                if(error) next(error);
+                res.status(204).end();
+            });
+        }else{
+            res.status(401).end();
+        }
+    }else{
+        res.status(400).end();
+    }
 };
