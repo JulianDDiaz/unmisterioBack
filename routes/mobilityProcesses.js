@@ -4,7 +4,6 @@ const { check, validationResult } = require('express-validator/check');
 const roles = require('../util/variables').roles;
 const processStates = require('../util/variables').processStates;
 const checkValues = require('../util/variables').checkValues;
-const processStates = require('../util/variables').processStates;
 const flow = require('../util/variables').flow;
 
 const mobilityProcess = {

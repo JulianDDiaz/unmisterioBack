@@ -48,7 +48,7 @@ module.exports.post = (req,res,next)=>{
     }
 };
 
-module.exports.post = (req,res,next)=>{
+module.exports.put = (req,res,next)=>{
     let finished,errors;
     finished = 0;
     errors = [];
