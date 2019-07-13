@@ -12,7 +12,7 @@ class Announcement{
         this.releaseDate = null;
         this.closureDate = null;
         this.limitDate = null;
-        this.state = null;
+        this.state = 'Abierta';
         this.image = null;
         this.target_un_contact_name = null;
         this.target_un_contact_position = null;
