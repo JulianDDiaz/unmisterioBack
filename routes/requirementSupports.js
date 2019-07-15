@@ -1,3 +1,8 @@
+const processStates = require('../util/variables').processStates;
+const processStatesNames = require('../util/variables').processStatesNames;
+const checkValues = require('../util/variables').checkValues;
+const flow = require('../util/variables').flow;
+
 const userOwnsMobilityProcess = (connection,req,next)=>{
     connection.query(`select User_idUser from Mobility_Process where idMobility_Process=${req.params.id}`,
     (error,results)=>{
@@ -38,6 +43,7 @@ module.exports.post = (req,res,next)=>{
                     if(errors.length>0){
                         next(errors);
                     }else{
+                        connection.query(`update Mobility_Process set state="${processStatesNames[flow[processStates['Adjuntar soportes']][checkValues.Accepted]]}" where idMobility_Process="${id}"`);
                         res.status(201).end();
                     }
                 }
