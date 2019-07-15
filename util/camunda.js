@@ -54,11 +54,11 @@ function getCamundaId(processData){
 }
 
 
-function getProcess(){
+function getProcess(role){
     var options = {
         host:camunda.host,
         port:8080,
-        path:'/engine-rest/process-instance?processDefinitionKey='+camunda,
+        path:'/engine-rest/task?assignee='+encodeURI(role),
         method:'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ function getProcess(){
                 //console.log(process);
                 processID = [];
                 for( var i =0;i < process.length;i++){
-                    processID.push(process[i].id)
+                    processID.push(process[i].processDefinitionId)
                 }
                 resolve(processID);
             });
