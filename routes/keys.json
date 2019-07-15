@@ -4,5 +4,9 @@
         "user" : "dev",
         "password" : "MisterioDev2019",
         "database" : "misteriodb"
+    },
+"camunda":{
+        "host":"ec2-54-173-16-169.compute-1.amazonaws.com",
+        "key":"Process_13052019"
     }
 }

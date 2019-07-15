@@ -1,11 +1,11 @@
 var http = require('http');
-
+var camunda = require('../routes/keys.json').camunda;
 
 function getCamundaId(processData){
     var options = {
-        host:'127.0.0.1',
+        host: camunda.host,
         port:8080,
-        path:'/engine-rest/process-definition/key/Process_13052019/start',
+        path:'/engine-rest/process-definition/key/'+camunda.key+'/start',
         method:'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -56,9 +56,9 @@ function getCamundaId(processData){
 
 function getProcess(){
     var options = {
-        host:'127.0.0.1',
+        host:camunda.host,
         port:8080,
-        path:'/engine-rest/process-instance?processDefinitionKey=Process_13052019',
+        path:'/engine-rest/process-instance?processDefinitionKey='+camunda,
         method:'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -86,6 +86,94 @@ function getProcess(){
     return response;
 }
 
+function getTask(idProcess){
+    var options = {
+        host:camunda.host,
+        port:8080,
+        path:'/engine-rest/task?processInstanceId='+idProcess,
+        method:'GET',
+        headers: {
+            'Content-Type': 'application/json',
+          },
+    };
+    var response = new Promise((resolve,rejec) =>{
+        var req = http.request(options,function(res){
+            var data = "";
+            res.on('data', function(chunk){
+                data+=chunk;
+            });
+            res.on('end', function(){
+                var process = [];
+                process = JSON.parse(data);
+                resolve(process[0].id);
+            });
+        });
+        req.end();
+    });
+    return response;
+}
+
+function nextState(idProcess,vb){
+    getTask(idProcess).then((task)=> {
+        //console.log(task);
+        closeTask(task);
+    });
+
+}
+function closeTask(task){
+    var options = {
+        host: camunda.host,
+        port:8080,
+        path:'/engine-rest/process-definition/task/'+task+'/complete',
+        method:'POST',
+        headers: {
+            'Content-Type': 'application/json',
+          },
+    };
+    
+    var resp = new Promise((resolve,rejec) =>{
+        var body =JSON.stringify({
+            variables: {
+                VB : {
+                    value : "Test de cierre 2 ",
+                    type: "String"
+                },
+                idConvocatoria:{
+                    value: 44,
+                    type:"Integer"
+                },
+                convocatoria:{
+                    value: "hola",
+                    type:"String"
+                },
+                correo:{
+                    value: "processData@correo",
+                    type:"String"
+                },
+                nombre:{
+                    value: "maunel",
+                    type:"String"
+                }
+            }
+        });
+        var req = http.request(options,function(res){
+            var data = "";
+            res.on('data', function(chunk){
+                data+=chunk;
+            });
+            res.on('end', function(){
+                console.log("request done");
+                resolve(data);
+            });
+        });
+        req.write(body);
+        req.write()
+        req.end();
+
+    });
+    return resp;
+}
+
 
 // testing ...
 pd = {
@@ -100,10 +188,18 @@ res.then((id)=>{
     console.log(id);
 }) */
 
-getProcess().then((ids)=>{
+/* getProcess().then((ids)=>{
     ids.forEach(element => {
         console.log(element);
     });
-});
+}); */
 
-//endTask(task);
+/* getTask('2b669eb8-a5c0-11e9-b3c9-005056c00008').then((res)=> {
+    console.log(res);
+}); */
+closeTask('ed6d3c7c-a6ae-11e9-88b6-0242a13254d6').then(
+    res =>{
+        console.log(res);
+    }
+);
+//*nextState('2b669eb8-a5c0-11e9-b3c9-005056c00008',true);
