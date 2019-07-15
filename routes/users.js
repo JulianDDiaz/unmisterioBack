@@ -20,7 +20,7 @@ module.exports.get = (req,res,next)=>{
             else res.status(200).send(results);
         });
     }else{
-        res.stauts(401).end();
+        res.status(401).end();
     }
 };
 
@@ -36,17 +36,21 @@ module.exports.getById = (req,res,next)=>{
 }
 
 module.exports.put = (req,res,next)=>{
-    let query = "";
-    for(i of user){
-        if(req.body[i]){
-            query += `,${i}="${req.body[i]}"`;
+    if(req.userId){
+        let query = "";
+        for(i of user){
+            if(req.body[i]){
+                query += `,${i}="${req.body[i]}"`;
+            }
         }
+        connection.query(`update User set ${query.substring(1)} where idUser=${req.userId}`,
+        (error)=>{
+            if(error) next(error);
+            else res.status(204).end();
+        });
+    }else{
+        req.status(401).end();
     }
-    connection.query(`update User set ${query.substring(1)} where idUser=${req.userId}`,
-    (error)=>{
-        if(error) next(error);
-        else res.status(204).end();
-    });
 };
 
 module.exports.putById = (req,res,next)=>{

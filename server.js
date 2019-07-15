@@ -4,6 +4,7 @@ const users = require("./routes/users");
 const mobilityProcesses = require("./routes/mobilityProcesses");
 const requirementSupport = require("./routes/requirementSupports");
 const bodyParser = require('body-parser');
+const {OAuth2Client} = require('google-auth-library');
 
 const { check, validationResult } = require('express-validator/check');
 
@@ -13,8 +14,65 @@ const roles = require('./util/variables').roles;
 
 const PORT = 3000;
 const app = express();
+const CLIENT_ID = '331350514407-s7lkqidvng629hv05efpqhidvrcqev3m.apps.googleusercontent.com';
+const client = new OAuth2Client(CLIENT_ID);
 
 app.use(bodyParser.json());
+
+async function verify(token) {
+    const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: CLIENT_ID
+    });
+    return ticket.getPayload();
+}
+
+app.use((req,res,next)=>{
+    let token = req.header('googleToken');
+    if(token){
+        verify(token).catch(console.error).then((v)=>{
+            connection.query(`select Role_idRole,idUser from User where mail="${v.email}"`,
+            (error,results)=>{
+                if(error) next(error);
+                else if(results.length>0){
+                    req.role=results[0].Role_idRole;
+                    req.userId=results[0].idUser;
+                    console.log("\n\n");
+                    console.log(req.role);
+                    console.log(req.userId);
+                    console.log(token);
+                    console.log("\n\n");
+                    next();
+                }
+                else{
+                    connection.query(`insert into User (Role_idRole,name,mail) values ("${roles.student}","${v.name}","${v.email}")`,
+                    (error)=>{
+                        if(error) next(error);
+                        else{
+                            connection.query(`select Role_idRole,idUser from User where mail="${v.email}"`,
+                                (error,results)=>{
+                                    if(error) next(error);
+                                    else{
+                                        req.role=results[0].Role_idRole;
+                                        req.userId=results[0].idUser;
+                                        console.log("\n\n");
+                                        console.log(req.role);
+                                        console.log(req.userId);
+                                        console.log(token);
+                                        console.log("\n\n");
+                                        next();
+                                    }
+                                }
+                            );
+                        }
+                    });
+                }
+            });
+        });
+    }else{
+        next();
+    }
+});
 
 app.use((req,res,next)=>{
     if(req.query.role){
@@ -29,14 +87,6 @@ app.use((req,res,next)=>{
             res.status(401).send("Error in the query");
         }
     }
-    next();
-});
-
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', 'unmisterio.xyz');
-    res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-    res.header('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
     next();
 });
 
@@ -66,7 +116,7 @@ app.put('/users',users.put);
 app.put('/users/:id',users.putById);
 
 app.use((error,req,res,next)=>{
-    console.log(error);
+    console.error(error);
     res.status(500).end();
 });
 

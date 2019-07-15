@@ -98,7 +98,7 @@ function getCamundaId(){
 };
 
 module.exports.post = (req,res,next)=>{
-    if(req.body.idAnnouncement){
+    if(req.body.idAnnouncement && req.userId){
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(422).json({ errors: errors.array() });
