@@ -5,6 +5,7 @@ const mobilityProcesses = require("./routes/mobilityProcesses");
 const requirementSupport = require("./routes/requirementSupports");
 const bodyParser = require('body-parser');
 const {OAuth2Client} = require('google-auth-library');
+const cors = require('cors');
 
 const { check, validationResult } = require('express-validator/check');
 
@@ -18,6 +19,8 @@ const CLIENT_ID = '331350514407-s7lkqidvng629hv05efpqhidvrcqev3m.apps.googleuser
 const client = new OAuth2Client(CLIENT_ID);
 
 app.use(bodyParser.json());
+
+app.use(cors());
 
 async function verify(token) {
     const ticket = await client.verifyIdToken({
