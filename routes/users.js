@@ -14,11 +14,13 @@ module.exports.get = (req,res,next)=>{
                 if(error) next(error);
                 res.status(200).send(results);
             }); 
-    }else{
+    }else if(req.userId){
         connection.query(`SELECT * FROM User WHERE idUser=${req.userId}`,(error,results)=>{
             if(error) next(error);
             else res.status(200).send(results);
         });
+    }else{
+        res.stauts(401).end();
     }
 };
 

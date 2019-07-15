@@ -3,6 +3,7 @@ const connection = mysql.createConnection(require('./keys.json').db);
 const { check, validationResult } = require('express-validator/check');
 const roles = require('../util/variables').roles;
 const processStates = require('../util/variables').processStates;
+const processStatesNames = require('../util/variables').processStatesNames;
 const checkValues = require('../util/variables').checkValues;
 const flow = require('../util/variables').flow;
 
@@ -45,11 +46,39 @@ module.exports.get = (req,res,next) => {
             res.status(401).end();
         }
     }else{
-        connection.query(`select Mobility_Process.idMobility_Process,Mobility_Process.state,Mobility_Process.lastChange,Announcement.description,Announcement.name from Mobility_Process inner join Announcement on Mobility_Process.idAnnouncement=Announcement.idAnnouncement where Mobility_Process.User_idUser=${req.userId}`,
-        (error,results)=>{
-            if(error) next(error);
-            else res.status(200).send(results);
-        });
+        if(req.role==roles.student){
+            connection.query(`select Mobility_Process.idMobility_Process,Mobility_Process.state,Mobility_Process.lastChange,Announcement.description,Announcement.name from Mobility_Process inner join Announcement on Mobility_Process.idAnnouncement=Announcement.idAnnouncement where Mobility_Process.User_idUser=${req.userId}`,
+            (error,results)=>{
+                if(error) next(error);
+                else res.status(200).send(results);
+            });
+        }else if(req.role==roles.ORI){
+            connection.query(`select idAnnouncement from Announcement where closureDate<"${new Date().toISOString().substring(0,10)}" and state="Abierta"`,
+            (error,results)=>{
+                if(error) console.log(error);
+                else{
+                    if(results.length>0){
+                        let aux;
+                        for(r of results){
+                            aux = `or idAnnouncement=${r.idAnnouncement} `;
+                        }
+                        connection.query(`update Mobility_Process set state="Proceso caducó" where (${aux.substring(3)}) and (state="Revisión de formulario" or state="Corrección de formulario" or state="Adjuntar soportes" or state="Revisión asignaturas" or state="Revisión requisitos")`,
+                        (error)=>{
+                            if(error) console.log(error);
+                            else{
+                                connection.query(`update Announcement set state="Cerrada" where ${aux.substring(3)}`,
+                                (error)=>{
+                                    if(error) console.log(error);
+                                    
+                                });
+                            }
+                        });
+                    }
+                }
+            });
+        }else{
+
+        }
     }
 }
 
@@ -100,12 +129,15 @@ function update(b,id,res,next){
             query += `,${e}="${b[e]}"`;
         }
     }
-    connection.query(`update Mobility_Process set ${query.substring(1)},lastChange=${new Date().toISOString().substring(0,10)} where idMobility_Process="${id}"`,
+    connection.query(`update Mobility_Process set ${query.substring(1)},lastChange="${new Date().toISOString().substring(0,10)}" where idMobility_Process="${id}"`,
     (error)=>{
         if(error){
             next(error);
         }else{
-            res.status(204).end();
+            connection.query(`update Mobility_Process set state="${processStatesNames[flow[1][checkValues.Accepted]]}" where idMobility_Process="${id}"`,(error)=>{
+                if (error) next(error);
+                else res.status(204).end();
+            });
         }
     });
 };
@@ -170,7 +202,7 @@ module.exports.patch = (req,res,next)=>{
             else{
                 state = processStates[results[0].state];
                 if(isAthorized(req.role,state)){
-                    connection.query(`update Mobility_Process set state=${flow[state][checkValues[req.body.check]]} where idMobility_Process=${req.params.id}`,
+                    connection.query(`update Mobility_Process set state=${processStatesNames[flow[state][checkValues[req.body.check]]]} where idMobility_Process=${req.params.id}`,
                     (error)=>{
                         if(error) next(error);
                         else res.status(204).end();

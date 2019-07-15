@@ -22,6 +22,17 @@ const processStates = {
     'Proceso descartado' : 9
 }
 module.exports.processStates = processStates;
+const processStatesNames = ['Revisión de formulario',
+'Corrección de formulario',
+'Proceso caducó',
+'Adjuntar soportes',
+'Revisión asignaturas',
+'Revisión requisitos',
+'Comité seleccionador',
+'En espera de aprobación por parte de destino',
+'Proceso aprobado',
+'Proceso descartado'];
+module.exports.processStatesNames = processStatesNames;
 const flow = [
     [1,3],
     [2,0],
