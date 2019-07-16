@@ -40,11 +40,6 @@ app.use((req,res,next)=>{
                 else if(results.length>0){
                     req.role=results[0].Role_idRole;
                     req.userId=results[0].idUser;
-                    console.log("\n\n");
-                    console.log(req.role);
-                    console.log(req.userId);
-                    console.log(token);
-                    console.log("\n\n");
                     next();
                 }
                 else{
@@ -58,11 +53,6 @@ app.use((req,res,next)=>{
                                     else{
                                         req.role=results[0].Role_idRole;
                                         req.userId=results[0].idUser;
-                                        console.log("\n\n");
-                                        console.log(req.role);
-                                        console.log(req.userId);
-                                        console.log(token);
-                                        console.log("\n\n");
                                         next();
                                     }
                                 }

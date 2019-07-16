@@ -6,6 +6,7 @@ const processStates = require('../util/variables').processStates;
 const processStatesNames = require('../util/variables').processStatesNames;
 const checkValues = require('../util/variables').checkValues;
 const flow = require('../util/variables').flow;
+const camundaMannager = require('../util/camunda');
 
 const mobilityProcess = {
     idAnnouncement : null,
@@ -52,7 +53,7 @@ module.exports.get = (req,res,next) => {
                 if(error) next(error);
                 else res.status(200).send(results);
             });
-        }else if(req.role==roles.ORI){
+        }else if(req.role==roles.DRE){
             connection.query(`select idAnnouncement from Announcement where closureDate<"${new Date().toISOString().substring(0,10)}" and state="Abierta"`,
             (error,results)=>{
                 if(error) console.log(error);
@@ -69,7 +70,10 @@ module.exports.get = (req,res,next) => {
                                 connection.query(`update Announcement set state="Cerrada" where ${aux.substring(3)}`,
                                 (error)=>{
                                     if(error) console.log(error);
-                                    
+                                    camundaMannager.getProcess("DRE").catch((error)=>next(error))
+                                    .then((processes)=>{
+                                        res.status(201).send(processes);
+                                    });
                                 });
                             }
                         });
@@ -77,7 +81,17 @@ module.exports.get = (req,res,next) => {
                 }
             });
         }else{
-
+            let camundaRole = "";
+            if(req.role==roles.coordinator) camundaRole = "Coordinador curricular";
+            else if(req.role==roles.committee) camundaRole = "Comité de programas curriculares";
+            else if(req.role==roles.ORI) camundaRole = "ORI";
+            if(camundaRole=="") res.status(401).end();
+            else{
+                camundaMannager.getProcess(camundaRole).catch((error)=>next(error))
+                .then((processes)=>{
+                    res.status(201).send(processes);
+                });
+            }
         }
     }
 }
@@ -92,10 +106,6 @@ module.exports.getByAnnouncementId = (req,res,next)=>{
     }
     
 }
-
-function getCamundaId(){
-    return new String(parseInt(Math.random()*10000));
-};
 
 module.exports.post = (req,res,next)=>{
     if(req.body.idAnnouncement && req.userId){
@@ -112,11 +122,32 @@ module.exports.post = (req,res,next)=>{
                 b[e] = null;
             }
         }
-        connection.query(
-            `INSERT INTO Mobility_Process VALUES ("${getCamundaId()}","Revisión de formulario","${currentDate}",${b.idAnnouncement},"${currentDate}",${req.userId},${b.un_location},${b.un_faculty},${b.un_curricular_program},${b.papa},${b.un_curricular_coordinator_name},${b.un_curricular_coordinator_phone},${b.un_curricular_coordinator_email},${b.target_city},${b.target_faculty},${b.target_curricular_program},${b.modality})`
-            ,(error) => {if(error) next(error);}
-        )
-        res.status(201).end();
+        let camundaData = {};
+        connection.query(`select name,mail from User where idUser=${req.userId}`,
+        (error,results)=>{
+            if(error) next(error);
+            else{
+                camundaData.correo = results[0].mail;
+                camundaData.nombre = results[0].name;
+                connection.query(`select name from Announcement where idAnnouncement=${req.body.idAnnouncement}`,
+                (error,results)=>{
+                    if(error) next(error);
+                    else{
+                        camundaData.convocatoria = results[0].name;
+                        camundaData.idConvocatoria = req.body.idAnnouncement;
+                        camundaMannager.getCamundaId(camundaData).catch((error)=>next(error)).then((processId)=>{
+                            connection.query(
+                                `INSERT INTO Mobility_Process VALUES ("${processId}","Revisión de formulario","${currentDate}",${b.idAnnouncement},"${currentDate}",${req.userId},${b.un_location},${b.un_faculty},${b.un_curricular_program},${b.papa},${b.un_curricular_coordinator_name},${b.un_curricular_coordinator_phone},${b.un_curricular_coordinator_email},${b.target_city},${b.target_faculty},${b.target_curricular_program},${b.modality})`
+                                ,(error) => {
+                                    if(error) next(error);
+                                    else res.status(201).end();
+                                }
+                            );
+                        });
+                    }
+                });
+            }
+        });
     }else{
         res.status(400).end();
     }
@@ -195,17 +226,21 @@ const isAthorized = (role,state)=>{
 }
 
 module.exports.patch = (req,res,next)=>{
-    if(req.body.checkValues=='Rejected' || req.body.checkValues=='Accepted'){
-        connection.query(`select state from Mobility_Process where idMobility_Process=${req.params.id}`,
+    if(req.body.check=='Rejected' || req.body.check=='Accepted'){
+        connection.query(`select state from Mobility_Process where idMobility_Process="${req.params.id}"`,
         (error,results)=>{
             if(error) next(error);
             else{
                 state = processStates[results[0].state];
                 if(isAthorized(req.role,state)){
-                    connection.query(`update Mobility_Process set state=${processStatesNames[flow[state][checkValues[req.body.check]]]} where idMobility_Process=${req.params.id}`,
+                    connection.query(`update Mobility_Process set state="${processStatesNames[flow[state][checkValues[req.body.check]]]}" where idMobility_Process="${req.params.id}"`,
                     (error)=>{
                         if(error) next(error);
-                        else res.status(204).end();
+                        else {
+                            console.log(req.params.id);
+                            camundaMannager.nextState(req.params.id,req.body.check=='Accepted');
+                            res.status(204).end()
+                        }
                     });
                 }else{
                     res.status(401).end();

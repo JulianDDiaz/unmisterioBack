@@ -52,7 +52,7 @@ function getCamundaId(processData){
     });
     return response;
 }
-
+module.exports.getCamundaId = getCamundaId;
 
 function getProcess(role){
     var options = {
@@ -85,6 +85,7 @@ function getProcess(role){
     });
     return response;
 }
+module.exports.getProcess = getProcess;
 
 function getTask(idProcess){
     var options = {
@@ -120,6 +121,8 @@ function nextState(idProcess,vb){
     });
 
 }
+module.exports.nextState = nextState;
+
 function closeTask(task){
     var options = {
         host: camunda.host,
@@ -167,7 +170,6 @@ function closeTask(task){
             });
         });
         req.write(body);
-        req.write()
         req.end();
 
     });
