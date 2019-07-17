@@ -89,7 +89,21 @@ module.exports.get = (req,res,next) => {
             else{
                 camundaMannager.getProcess(camundaRole).catch((error)=>next(error))
                 .then((processes)=>{
-                    res.status(201).send(processes);
+                    processes = JSON.parse(processes);
+                    if(processes.length>0){
+                        query = "";
+                        for(p of processes){
+                            query += `or idMobility_Process="${p.executionId}"`;
+                        }
+                        connection.query(`select * from Mobility_Process inner join User on Mobility_Process.User_idUser=User.idUser where ${query.substring(3)}`,
+                        (error,results)=>{
+                            if(error) next(error);
+                            else{
+                                res.status(201).send(results);
+                            }
+                        });
+                    }
+                    else res.status(201).send(processes);
                 });
             }
         }
@@ -140,7 +154,10 @@ module.exports.post = (req,res,next)=>{
                                 `INSERT INTO Mobility_Process VALUES ("${processId}","Revisión de formulario","${currentDate}",${b.idAnnouncement},"${currentDate}",${req.userId},${b.un_location},${b.un_faculty},${b.un_curricular_program},${b.papa},${b.un_curricular_coordinator_name},${b.un_curricular_coordinator_phone},${b.un_curricular_coordinator_email},${b.target_city},${b.target_faculty},${b.target_curricular_program},${b.modality})`
                                 ,(error) => {
                                     if(error) next(error);
-                                    else res.status(201).end();
+                                    else {
+                                        camundaMannager.nextState(processId,true);
+                                        res.status(204).end();
+                                    }
                                 }
                             );
                         });
@@ -167,7 +184,10 @@ function update(b,id,res,next){
         }else{
             connection.query(`update Mobility_Process set state="${processStatesNames[flow[1][checkValues.Accepted]]}" where idMobility_Process="${id}"`,(error)=>{
                 if (error) next(error);
-                else res.status(204).end();
+                else {
+                    camundaMannager.nextState(processId,true);
+                    res.status(204).end();
+                }
             });
         }
     });

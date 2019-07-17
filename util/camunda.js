@@ -82,6 +82,40 @@ function getProcessVariables(idProcess){
     return resp;
 }
 
+function getProcesses(role){
+    var options = {
+        host:camunda.host,
+        port:8080,
+        path:'/engine-rest/task?assignee='+encodeURI(role),
+        path:'/engine-rest/task?assignee='+encodeURI(role)+'&processDefinitionKey='+camunda.key,
+        method:'GET',
+        headers: {
+            'Content-Type': 'application/json',
+          },
+    };
+    var response = new Promise((resolve,rejec) =>{
+        var req = http.request(options,function(res){
+            var data = "";
+            res.on('data', function(chunk){
+                data+=chunk;
+            });
+            res.on('end', function(){
+                var process = [];
+                process = JSON.parse(data);
+                //console.log(process);
+                processID = [];
+                for( var i =0;i < process.length;i++){
+                    processID.push(process[i].processDefinitionId)
+                }
+                resolve(data);
+            });
+        });
+        req.end();
+    });
+    return response;
+}
+
+
 function getProcess(role){
     let dataProcess = new Promise((resolve,reject) => {
 
@@ -142,7 +176,7 @@ function getProcessID(role){ // returns a process ids array of the given role
     });
     return response;
 }
-module.exports.getProcess = getProcess;
+module.exports.getProcess = getProcesses;
 
 function getTask(idProcess){
     var options = {

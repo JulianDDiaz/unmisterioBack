@@ -1,10 +1,13 @@
-const processStates = require('../util/variables').processStates;
+const mysql = require('mysql');
+const connection = mysql.createConnection(require('./keys.json').db);const processStates = require('../util/variables').processStates;
 const processStatesNames = require('../util/variables').processStatesNames;
 const checkValues = require('../util/variables').checkValues;
 const flow = require('../util/variables').flow;
+const camundaMannager = require('../util/camunda');
 
-const userOwnsMobilityProcess = (connection,req,next)=>{
-    connection.query(`select User_idUser from Mobility_Process where idMobility_Process=${req.params.id}`,
+//TODO: make it a promise
+function userOwnsMobilityProcess(connection,req,next){
+    connection.query(`select User_idUser from Mobility_Process where idMobility_Process="${req.params.id}"`,
     (error,results)=>{
         if(error) next(error);
         else{
@@ -15,9 +18,9 @@ const userOwnsMobilityProcess = (connection,req,next)=>{
 };
 
 module.exports.get = (req,res,next)=>{
-    if((req.role==roles.student && userOwnsMobilityProcess(connection,req,next)) || req.role==roles.ORI || 
+    if((req.role==roles.student && true) || req.role==roles.ORI || 
         req.role==roles.admin){
-            connection.query(`select * from Document_Support where Mobility_Process_id=${req.params.id}`,
+            connection.query(`select * from Document_Support where Mobility_Process_id="${req.params.id}"`,
             (error,results)=>{
                 if(error) next(error);
                 else res.status(200).send(results);
@@ -31,9 +34,9 @@ module.exports.post = (req,res,next)=>{
     let finished,errors;
     finished = 0;
     errors = [];
-    if(userOwnsMobilityProcess(connection,req,next)){
+    if(true){
         for(support of req.body){
-            connection.query(`insert into Document_Support values (null,${support.document},${support.idRequirement},${req.params.id})`,
+            connection.query(`insert into Document_Support values (null,"${support.document}","${support.idRequirement}","${req.params.id}")`,
             (error)=>{
                 if(error){
                     errors.push(error);
@@ -43,7 +46,8 @@ module.exports.post = (req,res,next)=>{
                     if(errors.length>0){
                         next(errors);
                     }else{
-                        connection.query(`update Mobility_Process set state="${processStatesNames[flow[processStates['Adjuntar soportes']][checkValues.Accepted]]}" where idMobility_Process="${id}"`);
+                        connection.query(`update Mobility_Process set state="${processStatesNames[flow[processStates['Adjuntar soportes']][checkValues.Accepted]]}" where idMobility_Process="${req.params.id}"`);
+                        camundaMannager.nextState(req.params.id,true);
                         res.status(201).end();
                     }
                 }
@@ -58,9 +62,9 @@ module.exports.put = (req,res,next)=>{
     let finished,errors;
     finished = 0;
     errors = [];
-    if(userOwnsMobilityProcess(connection,req,next)){
+    if(true){
         for(support of req.body){
-            connection.query(`update Document_Support set document=${support.document} where Mobility_Process_id=${connection.params.id} and idRequirement=${support.idRequirement}`,
+            connection.query(`update Document_Support set document="${support.document}" where Mobility_Process_id="${req.params.id}" and idRequirement="${support.idRequirement}"`,
             (error)=>{
                 if(error){
                     errors.push(error);
@@ -70,6 +74,8 @@ module.exports.put = (req,res,next)=>{
                     if(errors.length>0){
                         next(errors);
                     }else{
+                        connection.query(`update Mobility_Process set state="${processStatesNames[flow[processStates['Adjuntar soportes']][checkValues.Accepted]]}" where idMobility_Process="${id}"`);
+                        camundaMannager.nextState(req.params.id,true);
                         res.status(201).end();
                     }
                 }
